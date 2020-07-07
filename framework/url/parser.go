@@ -6,9 +6,7 @@ import (
 
 func ParsePath(path string,pathList [][]string) (map[string]string,bool) {
 	var param map[string]string
-	path = strings.Replace(path,"/","",1)
-	path = strings.ReplaceAll(path,"/"," ")
-	pathSplit := strings.Split(path," ")
+	pathSplit := PathToSlice(path)
 
 	found := false
 
@@ -22,10 +20,11 @@ func ParsePath(path string,pathList [][]string) (map[string]string,bool) {
 }
 
 func checkPathConfig(path []string,pattern []string) (map[string]string,bool){
-	data := map[string]string{}
-	if  len(path) != len(pattern){
+	if len(path) != len(pattern){
 		return nil,false
 	}
+
+	data := map[string]string{}
 
 	same := true
 
@@ -48,4 +47,16 @@ func checkPathConfig(path []string,pattern []string) (map[string]string,bool){
 	}
 
 	return data,same
+}
+
+func PathToSlice(path string) []string{
+	path = strings.Replace(path,"/","",1)
+	path = strings.ReplaceAll(path,"/"," ")
+	pathSplit := strings.Split(path," ")
+	lengthPath := len(pathSplit)
+	if pathSplit[lengthPath - 1] == "" {
+		pathSplit = pathSplit[:lengthPath - 1]
+	}
+
+	return pathSplit
 }
