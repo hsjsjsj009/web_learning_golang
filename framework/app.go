@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"web_learning_golang/framework/response"
 	"web_learning_golang/framework/url"
 )
@@ -33,7 +32,7 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
 	if !found {
 		w.WriteHeader(404)
 		_, _ = w.Write([]byte("404 Not Found"))
-		log.Println(fmt.Sprintf("[%s] %s status code %d",strings.ToUpper(method),path,404))
+		log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,404))
 		return
 	}
 
@@ -54,14 +53,17 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
 
 	if responseObj != nil {
 		responseObj.WriteHeader(w)
-		err := responseObj.SendResponse(w)
-		statusCode = http.StatusOK
-		if err != nil {
+		if err := responseObj.SendResponse(w); err != nil {
 			statusCode = http.StatusInternalServerError
 			http.Error(w,err.Error(), int(statusCode))
 			log.Fatal(fmt.Sprintf("Error %s\n",err.Error()))
 			return
 		}
+
+		if statusCode = responseObj.GetStatusCode(); statusCode == 0 {
+			statusCode = http.StatusOK
+		}
+
 		log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,statusCode))
 		return
 	}
