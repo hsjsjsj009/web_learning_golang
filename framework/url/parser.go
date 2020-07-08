@@ -4,19 +4,23 @@ import (
 	"strings"
 )
 
-func ParsePath(path string,pathList [][]string) (map[string]string,bool) {
-	var param map[string]string
+func ParsePath(path string,pathList [][]string) (map[string]string,bool,int8) {
+	var (
+		param map[string]string
+		index int8 = -1
+	)
 	pathSplit := PathToSlice(path)
 
 	found := false
 
-	for _,obj := range pathList {
+	for idx,obj := range pathList {
 		if param,found = checkPathConfig(pathSplit,obj) ; found {
+			index = int8(idx)
 			break
 		}
 	}
 
-	return param,found
+	return param,found,index
 }
 
 func checkPathConfig(path []string,pattern []string) (map[string]string,bool){

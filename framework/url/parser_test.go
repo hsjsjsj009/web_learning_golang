@@ -17,53 +17,58 @@ func TestParsePathCorrect(t *testing.T){
 	}
 	url := "/asd/asd"
 
-	param,found := ParsePath(url,list)
+	param,found,idx := ParsePath(url,list)
 
 	output := map[string]string{
 		"asd":"asd",
 	}
 
+	assertions.Equal(0,idx)
 	assertions.Equal(true,found)
 	assertions.Equal(fmt.Sprint(output),fmt.Sprint(param))
 
 	url = "/dfg"
 
-	param,found = ParsePath(url,list)
+	param,found,idx = ParsePath(url,list)
 
 	output = map[string]string{}
 
+	assertions.Equal(1,idx)
 	assertions.Equal(true,found)
 	assertions.Equal(fmt.Sprint(output),fmt.Sprint(param))
 
 	url = "/dfg/"
 
-	param,found = ParsePath(url,list)
+	param,found,idx = ParsePath(url,list)
 
 	output = map[string]string{}
 
+	assertions.Equal(1,idx)
 	assertions.Equal(true,found)
 	assertions.Equal(fmt.Sprint(output),fmt.Sprint(param))
 
 	url = "/dfg/asd/dfg"
 
-	param,found = ParsePath(url,list)
+	param,found,idx = ParsePath(url,list)
 
 	output = map[string]string{
 		"dfg":"dfg",
 	}
 
+	assertions.Equal(2,idx)
 	assertions.Equal(true,found)
 	assertions.Equal(fmt.Sprint(output),fmt.Sprint(param))
 
 	url = "/asd/asd/dfg/dfg"
 
-	param,found = ParsePath(url,list)
+	param,found,idx = ParsePath(url,list)
 
 	output = map[string]string{
 		"asd":"asd",
 		"dfg":"dfg",
 	}
 
+	assertions.Equal(3,idx)
 	assertions.Equal(true,found)
 	assertions.Equal(fmt.Sprint(output),fmt.Sprint(param))
 
@@ -76,8 +81,9 @@ func TestParsePathNotFound(t *testing.T){
 
 	url := "/dfg/asd/"
 
-	_,found := ParsePath(url,list)
+	_,found,idx := ParsePath(url,list)
 
+	assertions.Equal(-1,idx)
 	assertions.Equal(false,found)
 
 }
