@@ -2,18 +2,30 @@ package main
 
 import (
 	"web_learning_golang/framework"
+	"web_learning_golang/framework/response"
 )
 
 func main(){
 	app := framework.NewApp()
 
 	mainRoute := app.MainRoute("/")
-	//mainHandler := mainRoute.CreateHandler()
-	//mainHandler.Get(func(request *framework.HttpRequest) response.Response {
-	//	return response.JsonResponse(map[string]interface{}{}).
-	//		SetStatusCode(200).
-	//		AddHeader("test","asd")
-	//})
+	mainRoute.Get(func(request *framework.HttpRequest) response.Response {
+		return response.Redirect("/asd/asdasdsa/",request.Request)
+	})
 
-	app.Start(":8080")
+	mainRoute.Post(func(request *framework.HttpRequest) response.Response {
+		_ = request.Request.ParseForm()
+		return response.JsonResponse(map[string]interface{}{
+			"form" : request.Request.Form["asdasdsa"],
+		})
+	})
+
+	secondRoute := app.MainRoute("/asd/:asd")
+	secondRoute.Get(func(request *framework.HttpRequest) response.Response {
+			return response.JsonResponse(map[string]interface{}{
+				"asd":request.GetVariablePath("asd"),
+			})
+	})
+
+	app.Start(":8081")
 }

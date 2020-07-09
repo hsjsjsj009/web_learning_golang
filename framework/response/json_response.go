@@ -8,23 +8,23 @@ import (
 type jsonResponse struct {
 	header map[string]string
 	Data map[string]interface{} `json:"data"`
-	statusCode int8
+	statusCode int
 }
 
 func JsonResponse(data map[string]interface{}) jsonResponse{
 	return jsonResponse{Data: data}
 }
 
-func (j jsonResponse) SetHeader(m map[string]string) jsonResponse {
+func (j jsonResponse) SetHeader(m map[string]string) Response {
 	j.header = m
 	return j
 }
 
-func (j jsonResponse) GetStatusCode() int8 {
+func (j jsonResponse) GetStatusCode() int {
 	return j.statusCode
 }
 
-func (j jsonResponse) SetStatusCode(code int8) jsonResponse{
+func (j jsonResponse) SetStatusCode(code int) Response {
 	j.statusCode = code
 	return j
 }
@@ -37,20 +37,22 @@ func (j jsonResponse) WriteHeader(writer http.ResponseWriter) {
 	}
 }
 
-func (j jsonResponse) AddHeader(key string,value string) jsonResponse {
+func (j jsonResponse) AddHeader(key string,value string) Response {
+	if j.header == nil {
+		j.header = map[string]string{}
+	}
 	j.header[key] = value
 	return j
 }
 
-func (j jsonResponse) SendResponse(w http.ResponseWriter) error {
+func (j jsonResponse) WriteResponse(w http.ResponseWriter) ([]byte,error) {
 	js,err := json.Marshal(j)
 
 	if err != nil {
-		return err
+		return nil,err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(js)
 
-	return err
+	return js,nil
 }

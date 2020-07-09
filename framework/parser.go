@@ -1,26 +1,27 @@
-package url
+package framework
 
 import (
 	"strings"
 )
 
-func ParsePath(path string,pathList [][]string) (map[string]string,bool,int8) {
+func ParsePath(path string,listHandler map[string]*handler) (map[string]string,bool,*handler) {
 	var (
 		param map[string]string
-		index int8 = -1
+		handler *handler = nil
 	)
 	pathSplit := PathToSlice(path)
 
 	found := false
 
-	for idx,obj := range pathList {
-		if param,found = checkPathConfig(pathSplit,obj) ; found {
-			index = int8(idx)
+	for _,obj := range listHandler {
+		pathSlice := obj.pathSplit
+		if param,found = checkPathConfig(pathSplit,pathSlice) ; found {
+			handler = obj
 			break
 		}
 	}
 
-	return param,found,index
+	return param,found,handler
 }
 
 func checkPathConfig(path []string,pattern []string) (map[string]string,bool){

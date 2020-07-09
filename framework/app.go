@@ -5,16 +5,14 @@ import (
 	"log"
 	"net/http"
 	"web_learning_golang/framework/response"
-	"web_learning_golang/framework/url"
 )
 
 type app struct {
-	listRoute [][]string
-	allHandler []*handler
+	routeHandler map[string]*handler
 }
 
 func NewApp() *app{
-	return &app{listRoute: [][]string{},allHandler: []*handler{}}
+	return &app{routeHandler: map[string]*handler{}}
 }
 
 func (a *app) MainRoute(path string) *route{
@@ -24,54 +22,62 @@ func (a *app) MainRoute(path string) *route{
 func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
 	var (
 		responseObj response.Response
-		statusCode int8
+		statusCode int
 	)
 	path := r.URL.Path
 	method := r.Method
-	pathVar,found ,idx:= url.ParsePath(path,a.listRoute)
+	pathVar,found ,handlerObj:= ParsePath(path,a.routeHandler)
 	if !found {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("404 Not Found"))
-		log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,404))
+		PrintLog(method,path,http.StatusNotFound)
 		return
 	}
 
 	requestObj := newRequest(pathVar,r)
-	handler := a.allHandler[idx]
+	handler := handlerObj.handlerFunc[method]
 
-	if handler.allMethod != nil {
-		responseObj = handler.allMethod(requestObj)
-	}else if handler.getMethod != nil && method == "GET" {
-		responseObj = handler.getMethod(requestObj)
-	}else if handler.postMethod != nil && method == "POST" {
-		responseObj = handler.postMethod(requestObj)
-	}else if handler.deleteMethod != nil && method == "DELETE" {
-		responseObj = handler.deleteMethod(requestObj)
-	}else if handler.putMethod != nil && method == "PUT" {
-		responseObj = handler.putMethod(requestObj)
-	}
-
-	if responseObj != nil {
-		responseObj.WriteHeader(w)
-		if err := responseObj.SendResponse(w); err != nil {
-			statusCode = http.StatusInternalServerError
-			http.Error(w,err.Error(), int(statusCode))
-			log.Fatal(fmt.Sprintf("Error %s\n",err.Error()))
-			return
-		}
-
-		if statusCode = responseObj.GetStatusCode(); statusCode == 0 {
-			statusCode = http.StatusOK
-		}
-
-		log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,statusCode))
+	if handler == nil {
+		PrintLog(method,path,http.StatusNotFound)
+		w.WriteHeader(404)
+		_, _ = w.Write([]byte(fmt.Sprintf("Path %s doesn't accept method %s",path,r.Method)))
 		return
 	}
 
-	log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,http.StatusNotFound))
-	w.WriteHeader(404)
-	_, _ = w.Write([]byte(fmt.Sprintf("Path %s doesn't accept method %s",path,r.Method)))
+	responseObj = handler(requestObj)
 
+	responseObj.WriteHeader(w)
+
+	data,err := responseObj.WriteResponse(w)
+
+	if data == nil && err == nil { // Redirect
+		if statusCode = responseObj.GetStatusCode(); statusCode == 0 {
+			statusCode = http.StatusFound
+		}
+		PrintLog(method,path,statusCode)
+		return
+	}
+
+	if err != nil {
+		statusCode = http.StatusInternalServerError
+		http.Error(w,err.Error(), statusCode)
+		log.Fatal(fmt.Sprintf("Error %s\n",err.Error()))
+		return
+	}
+
+	if statusCode = responseObj.GetStatusCode(); statusCode != 0 {
+		w.WriteHeader(statusCode)
+	}else{
+		statusCode = 200
+	}
+
+	_, _ = w.Write(data)
+
+	PrintLog(method,path,statusCode)
+}
+
+func PrintLog(method string, path string, code int){
+	log.Println(fmt.Sprintf("[%s] %s status code %d",method,path,code))
 }
 
 func (a *app) Start(url string) {
